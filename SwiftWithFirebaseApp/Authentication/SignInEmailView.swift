@@ -13,35 +13,39 @@ final class SignInEmailViewModel: ObservableObject{
     @Published var email = ""
     @Published var password = ""
     
-    // One way using asynmc throws
-//    func signIn() async throws{
-    
-    
-//        let userData = try await AuthenticationManager.shared.createUser(email: email,
-//                                                password: password)
-//    }
+
     
     // 2nd  way:  Using Task
-    func signIn(){
+    func signUp() async throws{
         // Unwrapping the email id and password
         guard !email.isEmpty, !password.isEmpty else {
             print("No email or password found")
             return
         }
-            
-        Task{
-            do{
-                let userReturnedData = try await AuthenticationManager.shared.createUser(email: email,
-                                                                    password: password)
-                print("Success singing in user")
-                print(userReturnedData)
-            }catch{
-                print("Error: \(error)")
-            }
-                
-        }
+        try await AuthenticationManager.shared.createUser(email: email,
+                                                        password: password)
+        
+        
+//        Task{
+//            do{
+//                let userReturnedData = try await AuthenticationManager.shared.createUser(email: email,
+//                                                                    password: password)
+//                print("Success singing in user")
+//                print(userReturnedData)
+//            }catch{
+//                print("Error: \(error)")
+//            }
+//        }
     }
-    
+    func signIn() async throws{
+        // Unwrapping the email id and password
+        guard !email.isEmpty, !password.isEmpty else {
+            print("No email or password found")
+            return
+        }
+        try await AuthenticationManager.shared.signInUser(email: email,
+                                                                         password: password)
+    }
     
 }
 
@@ -50,6 +54,7 @@ final class SignInEmailViewModel: ObservableObject{
 struct SignInEmailView: View {
     
     @StateObject private var viewModel = SignInEmailViewModel()
+    @Binding var showSignInView: Bool
     
     var body: some View {
         VStack{
@@ -64,7 +69,23 @@ struct SignInEmailView: View {
                 .cornerRadius(10.0)
             
             Button{
-                viewModel.signIn()
+//                viewModel.signIn()
+                Task{
+                    do{
+                        try await viewModel.signUp()
+                        showSignInView = false
+                        return
+                    }catch{
+                        print(error)
+                    }
+                    do{
+                        try await viewModel.signIn()
+                        showSignInView = false
+                        return
+                    }catch{
+                        print(error)
+                    }
+                }
             } label: {
                 Text("Sign in")
                     .font(.headline)
@@ -83,6 +104,6 @@ struct SignInEmailView: View {
 
 #Preview {
     NavigationStack{
-        SignInEmailView()
+        SignInEmailView(showSignInView: .constant(false))
     }
 }
